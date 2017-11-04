@@ -6,6 +6,12 @@ $ cd app
 $ npm i
 ```
 
+# Watch files and compile them when they changed
+
+```bash
+$ make
+```
+
 # Run
 
 ```bash
