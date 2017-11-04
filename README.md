@@ -2,8 +2,6 @@
 
 ```bash
 $ npm i
-$ cd app
-$ npm i
 # sudo make install
 ```
 
