@@ -2,15 +2,14 @@
   "name": "shooter.io",
   "version": "1.0.0",
   "description": "",
-  "main": "Gulpfile.js",
+  "main": "app/server.js",
   "author": "egorgl",
   "license": "ISC",
   "engines": {
     "node": "6.11.1"
   },
-  "main": "app/server.js",
   "scripts": {
-    "start": "node app/server.js",
+    "start": "node app/server.js"
   },
   "devDependencies": {
     "gulp": "^3.9.1",
