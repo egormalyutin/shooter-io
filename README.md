@@ -1,9 +1,10 @@
-# Install
+# Install server dependencies
 
 ```bash
 $ npm i
 $ cd app
 $ npm i
+# sudo make install
 ```
 
 # Watch files and compile them when they changed
