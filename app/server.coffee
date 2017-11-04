@@ -14,7 +14,7 @@ server  = require('http').createServer app
 
 Eureca       = require 'eureca.io'
 eurecaServer = new Eureca.Server
-	allow: [ 'playerUpdated' ]
+	allow: [ 'playerUpdated', 'playerRemoved' ]
 
 eurecaServer.attach server
 

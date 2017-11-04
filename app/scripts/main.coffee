@@ -21,30 +21,51 @@ module.exports = (es) ->
 		connections[c.id] = c.clientProxy
 
 	es.onDisconnect (c) ->
-		delete connections[c.id] if connections[c.id]
+		id = c.id
+		console.log 'Player ' + id + ' disconnected!'
+		delete connections[id] if connections[id]
 
+		removed = []
+
+		for _, player of players
+			if id == player.connectionID
+				for _, c of connections
+					c.playerRemoved player.name
+				delete players[player.name] 
+				delete  tokens[player.name]
+
+	es.exports.verifyUsername = (name) ->
+		unless name.length <= 20 and name.length > 3
+			return "Username must contain 3 symbols at least and 20 as maximum."
+
+		if players[name]
+			return "Player " + name + " already in game."
+
+		return true
 
 	es.exports.getToken = (name) ->
-		if verify name
-			unless tokens[name]
-				start = new Date
-				tokens[name] = 
-					(name +
-					':' +
-					random(1000000000000000, 9999999999999999) + 
-					':' +
-					randomSymbs(30)
-					)
-				end = new Date
-				console.log end - start
-				console.log 'New token: ' + tokens[name]
-				return tokens[name]
-			else
-				console.log tokens[name] + '\'s token exists'
-		else
-			console.log 'Bad name ' + name + '!'
+		unless name.length <= 20 and name.length > 3
+			console.log "TOKEN ERROR: Username (tried " + name + ") must contain 3 symbols at least and 20 as maximum."
+			return
+
+		if players[name]
+			console.log "TOKEN ERROR: Player " + name + " already in game."
+			return
+
+		return if tokens[name]
+
+		tokens[name] = 
+			(name +
+			':' +
+			random(1000000000000000, 9999999999999999) + 
+			':' +
+			randomSymbs(30)
+			)
+		console.log 'New token: ' + tokens[name]
+		return tokens[name]
 
 	es.exports.newPlayer = (name, token) ->
+		return if not name or not token
 		return if token != tokens[name]
 		if players[name]
 			console.log 'Player ' + name + ' exists!'
@@ -55,6 +76,7 @@ module.exports = (es) ->
 			x: 0
 			y: 0
 			count: 0	
+			connectionID: @user.clientId
 
 		console.log 'Created new player ' + name + '!'
 
@@ -64,12 +86,10 @@ module.exports = (es) ->
 		if tokens[player.name] == token
 			players[player.name] = player 
 		else
-			console.log 'Wrong token!'
+			console.log 'Wrong ' + player.name + '\'s token!'
+			return
 
 		for _, c of connections
 			c.playerUpdated players[player.name]
-			console.log 'Updated connection!' 
-
-		console.log 'Changed player ' + player.name + '!'
 
 	es.exports.getPlayers = -> players

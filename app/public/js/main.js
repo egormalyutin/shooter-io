@@ -17,8 +17,11 @@ Player = (function() {
       this[name] = prop;
     }
     this.element = $("<div/>");
+    this._elementName = $('<span/>');
+    this._elementName.text(this.name + ": ");
     this._elementLabel = $("<span/>");
-    this._elementLabel.text(this.count);
+    this._elementLabel.text(this.count + " ");
+    this.element.append(this._elementName);
     this.element.append(this._elementLabel);
     sf = this;
     if (token) {
@@ -28,7 +31,8 @@ Player = (function() {
           name: sf.name,
           x: sf.x,
           y: sf.y,
-          count: sf.count + 1
+          count: sf.count + 1,
+          connectionID: sf.connectionID
         }, token);
       });
       this.element.append(this._elementUp);
@@ -37,7 +41,11 @@ Player = (function() {
   }
 
   Player.prototype.render = function() {
-    return this._elementLabel.text(this.count);
+    return this._elementLabel.text(this.count + " ");
+  };
+
+  Player.prototype.remove = function() {
+    return this.element.remove();
   };
 
   return Player;
@@ -45,27 +53,48 @@ Player = (function() {
 })();
 
 client.exports.playerUpdated = function(player) {
-  if (!players[player.name]) {
+  if (!global.ready) {
+    return;
+  }
+  if (!(players[player.name] && players.name !== global.name)) {
     return players[player.name] = new Player(player);
   } else {
     players[player.name].name = player.name;
     players[player.name].x = player.x;
     players[player.name].y = player.y;
     players[player.name].count = player.count;
+    players[player.name].connectionID = player.connectionID;
     return players[player.name].render();
   }
+};
+
+client.exports.playerRemoved = function(name) {
+  players[name].remove();
+  return delete players[name];
 };
 
 ui = {
   body: $("body"),
   newPlayer: $("#newPlayer"),
   playerName: $("#playerName"),
-  menu: $("#menu")
+  menu: $("#menu"),
+  unError: $("#unError")
 };
 
 client.ready(function(serverLocal) {
-  var joinServer;
+  var joinServer, verifyUsername;
   server = serverLocal;
+  verifyUsername = function(cb) {
+    var un;
+    un = ui.playerName.val();
+    return server.verifyUsername(un).onReady(function(result) {
+      if (typeof result === 'string') {
+        return ui.unError.text(result);
+      } else {
+        return cb();
+      }
+    });
+  };
   ui.body.show();
   ui.newPlayer.on('click', function() {
     return joinServer();
@@ -76,34 +105,38 @@ client.ready(function(serverLocal) {
     }
   });
   return joinServer = function() {
-    var name;
-    setTimeout((function() {
-      return ui.menu.hide();
-    }), 300);
-    ui.menu.css('opacity', '0');
-    name = ui.playerName.val();
-    return server.getToken(name).onReady(function(token) {
+    return verifyUsername(function() {
+      var name;
+      setTimeout((function() {
+        return ui.menu.hide();
+      }), 300);
+      ui.menu.css('opacity', '0');
+      name = ui.playerName.val();
       global.name = name;
-      global.token = token;
-      return server.newPlayer(name, token).onReady(function(player) {
-        return server.getPlayers().onReady(function(playersTmp) {
-          var _, uis;
-          uis = {};
-          players = {};
-          for (_ in playersTmp) {
-            player = playersTmp[_];
-            console.log(player);
-            if (player.name !== name) {
-              players[player.name] = new Player(player);
+      return server.getToken(name).onReady(function(token) {
+        global.token = token;
+        return server.newPlayer(name, token).onReady(function(player) {
+          return server.getPlayers().onReady(function(playersTmp) {
+            var _;
+            global.ready = true;
+            players = {};
+            if (Object.keys(playersTmp).length) {
+              for (_ in playersTmp) {
+                player = playersTmp[_];
+                console.log(player);
+                if (player.name !== name) {
+                  players[player.name] = new Player(player);
+                }
+                if (player.name === name) {
+                  players[player.name] = new Player(player, token);
+                }
+                if (player.name === name) {
+                  global.spawned = true;
+                }
+              }
             }
-            if (player.name === name) {
-              players[player.name] = new Player(player, token);
-            }
-            if (player.name === name) {
-              global.spawned = true;
-            }
-          }
-          return console.log('Got token! ' + token);
+            return console.log('Got token! ' + token);
+          });
         });
       });
     });

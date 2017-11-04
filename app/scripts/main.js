@@ -23,28 +23,58 @@ module.exports = function(es) {
     return connections[c.id] = c.clientProxy;
   });
   es.onDisconnect(function(c) {
-    if (connections[c.id]) {
-      return delete connections[c.id];
+    var _, id, player, removed, results;
+    id = c.id;
+    console.log('Player ' + id + ' disconnected!');
+    if (connections[id]) {
+      delete connections[id];
     }
-  });
-  es.exports.getToken = function(name) {
-    var end, start;
-    if (verify(name)) {
-      if (!tokens[name]) {
-        start = new Date;
-        tokens[name] = name + ':' + random(1000000000000000, 9999999999999999) + ':' + randomSymbs(30);
-        end = new Date;
-        console.log(end - start);
-        console.log('New token: ' + tokens[name]);
-        return tokens[name];
+    removed = [];
+    results = [];
+    for (_ in players) {
+      player = players[_];
+      if (id === player.connectionID) {
+        for (_ in connections) {
+          c = connections[_];
+          c.playerRemoved(player.name);
+        }
+        delete players[player.name];
+        results.push(delete tokens[player.name]);
       } else {
-        return console.log(tokens[name] + '\'s token exists');
+        results.push(void 0);
       }
-    } else {
-      return console.log('Bad name ' + name + '!');
     }
+    return results;
+  });
+  es.exports.verifyUsername = function(name) {
+    if (!(name.length <= 20 && name.length > 3)) {
+      return "Username must contain 3 symbols at least and 20 as maximum.";
+    }
+    if (players[name]) {
+      return "Player " + name + " already in game.";
+    }
+    return true;
+  };
+  es.exports.getToken = function(name) {
+    if (!(name.length <= 20 && name.length > 3)) {
+      console.log("TOKEN ERROR: Username (tried " + name + ") must contain 3 symbols at least and 20 as maximum.");
+      return;
+    }
+    if (players[name]) {
+      console.log("TOKEN ERROR: Player " + name + " already in game.");
+      return;
+    }
+    if (tokens[name]) {
+      return;
+    }
+    tokens[name] = name + ':' + random(1000000000000000, 9999999999999999) + ':' + randomSymbs(30);
+    console.log('New token: ' + tokens[name]);
+    return tokens[name];
   };
   es.exports.newPlayer = function(name, token) {
+    if (!name || !token) {
+      return;
+    }
     if (token !== tokens[name]) {
       return;
     }
@@ -56,24 +86,26 @@ module.exports = function(es) {
       name: name,
       x: 0,
       y: 0,
-      count: 0
+      count: 0,
+      connectionID: this.user.clientId
     };
     console.log('Created new player ' + name + '!');
     return es.exports.playerChanged(players[name], token);
   };
   es.exports.playerChanged = function(player, token) {
-    var _, c;
+    var _, c, results;
     if (tokens[player.name] === token) {
       players[player.name] = player;
     } else {
-      console.log('Wrong token!');
+      console.log('Wrong ' + player.name + '\'s token!');
+      return;
     }
+    results = [];
     for (_ in connections) {
       c = connections[_];
-      c.playerUpdated(players[player.name]);
-      console.log('Updated connection!');
+      results.push(c.playerUpdated(players[player.name]));
     }
-    return console.log('Changed player ' + player.name + '!');
+    return results;
   };
   return es.exports.getPlayers = function() {
     return players;

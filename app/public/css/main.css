@@ -8,7 +8,11 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  font-family: def; }
+  font-family: def;
+  font-size: 1.4vw !important; }
+  @media screen and (min-width: 480px) and (max-width: 800px) {
+    html, body {
+      font-size: 4vw !important; } }
 
 body {
   display: none; }
@@ -78,3 +82,7 @@ button {
   text-align: center; }
   #joinServer input {
     width: 100%; }
+
+#unError {
+  margin-top: 1vw;
+  color: #E53935; }
