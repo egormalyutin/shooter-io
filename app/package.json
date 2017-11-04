@@ -1,0 +1,16 @@
+{
+  "name": "shooter.io",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "egorgl",
+  "license": "ISC",
+  "dependencies": {
+    "ejs": "^2.5.7",
+    "eureca.io": "^0.7.1",
+    "express": "^4.16.2"
+  }
+}

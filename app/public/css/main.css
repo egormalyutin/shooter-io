@@ -1,0 +1,80 @@
+@font-face {
+  font-family: def;
+  src: url("../fonts/def.ttf"); }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: def; }
+
+body {
+  display: none; }
+
+input, button {
+  font-family: def; }
+
+button {
+  font-size: 1.8vw !important; }
+
+input:not([type]), input[type=text] {
+  border: 3px solid #673AB7;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius: 30px;
+  font-size: 20px;
+  margin-top: 1vw;
+  margin-bottom: 1vw;
+  box-sizing: border-box;
+  text-align: center;
+  outline: none;
+  transition: border-color ease-out 0.2s;
+  font-size: 1.5vw !important; }
+  input:not([type]):hover, input:not([type]):active, input[type=text]:hover, input[type=text]:active {
+    border-color: rgba(103, 58, 183, 0.8); }
+
+button {
+  border: none;
+  color: white;
+  padding: 10px;
+  border-radius: 30px;
+  font-size: 20px;
+  text-align: center;
+  outline: none;
+  background: #673AB7;
+  transition: background ease-out 0.2s; }
+  button:hover, button:active {
+    background: rgba(103, 58, 183, 0.8); }
+
+#menu {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  background: white;
+  z-index: 1;
+  transition: opacity ease-out 0.3s; }
+
+#game {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  background: white; }
+
+#joinServer {
+  width: 30vw;
+  text-align: center; }
+  #joinServer input {
+    width: 100%; }
