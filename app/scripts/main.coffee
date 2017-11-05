@@ -1,4 +1,4 @@
-module.exports = (es) ->
+module.exports = (es, out) ->
 	connections = {}
 	players     = {}
 	tokens      = {}
@@ -18,11 +18,12 @@ module.exports = (es) ->
 
 
 	es.onConnect (c) -> 
+		out.info 'User ' + c.id + ' connected!'
 		connections[c.id] = c.clientProxy
 
 	es.onDisconnect (c) ->
 		id = c.id
-		console.log 'Player ' + id + ' disconnected!'
+		out.info 'User ' + id + ' disconnected!'
 		delete connections[id] if connections[id]
 
 		removed = []
@@ -41,18 +42,23 @@ module.exports = (es) ->
 		if players[name]
 			return "Player " + name + " already in game."
 
+		if tokens[name]
+			return name + "'s token exists"
+
 		return true
 
 	es.exports.getToken = (name) ->
 		unless name.length <= 20 and name.length > 3
-			console.log "TOKEN ERROR: Username (tried " + name + ") must contain 3 symbols at least and 20 as maximum."
+			out.error "Username (tried " + name + ") must contain 3 symbols at least and 20 as maximum."
 			return
 
 		if players[name]
-			console.log "TOKEN ERROR: Player " + name + " already in game."
+			out.error "Player " + name + " already in game."
 			return
 
-		return if tokens[name]
+		if tokens[name]
+			out.error name + "'s token exists."
+			return
 
 		tokens[name] = 
 			(name +
@@ -61,14 +67,14 @@ module.exports = (es) ->
 			':' +
 			randomSymbs(30)
 			)
-		console.log 'New token: ' + tokens[name]
+		out.info 'New token: ' + tokens[name]
 		return tokens[name]
 
 	es.exports.newPlayer = (name, token) ->
 		return if not name or not token
 		return if token != tokens[name]
 		if players[name]
-			console.log 'Player ' + name + ' exists!'
+			out.error 'Player ' + name + ' exists!'
 			return 
 
 		players[name] = 
@@ -78,7 +84,7 @@ module.exports = (es) ->
 			count: 0	
 			connectionID: @user.clientId
 
-		console.log 'Created new player ' + name + '!'
+		out.info 'Created new player ' + name + '!'
 
 		es.exports.playerChanged players[name], token
 
@@ -86,7 +92,7 @@ module.exports = (es) ->
 		if tokens[player.name] == token
 			players[player.name] = player 
 		else
-			console.log 'Wrong ' + player.name + '\'s token!'
+			out.error player.name + '\'s token is invalid!'
 			return
 
 		for _, c of connections
