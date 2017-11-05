@@ -3,6 +3,7 @@ term    = termkit.terminal
 figlet  = require 'figlet'
 center  = require 'center-align'
 boxen   = require 'boxen'
+util    = require 'util'
 require 'colors'
 out = {
 	info: (phrase) ->
@@ -14,6 +15,7 @@ out = {
 		out.cliRebase()
 
 	promo: (phrase) ->
+		term '\n'
 		text = figlet.textSync phrase,
 			font: 'Big'
 			horizontalLayout: 'default'
@@ -31,11 +33,11 @@ out = {
 		term.bold(boxen(center(phrase + ""), {padding: 1}))
 		term '\n\n'
 
-	text: (phrase) ->
+	text: (phrase, multiline) ->
 		# →
 		lines = phrase.split(/\n/gi).length
 
-		if lines == 1
+		if lines == 1 and not multiline
 			term.bold("→ ").bold(phrase)("\n")
 		else
 			term.bold("→ ")("\n")
@@ -48,9 +50,11 @@ out = {
 	help: ->
 		out.text( 
 			[
-				'help'.cyan + '  - display this help'
-				'admin'.cyan + ' - register player "admin"'
-				'exit'.cyan + '  - stop server and exit from server\'s cli'
+				'help'.cyan + '                  - display this help'
+				'admin'.cyan + '                 - generate brand new admin token'
+				'remove [player name]'.cyan + '  - remove player from game'
+				'kick [player name]'.cyan + '    - similar to ' + '"remove"'.cyan
+				'exit'.cyan + '                  - stop server and exit from server\'s cli'
 			].join '\n'
 		)
 
@@ -70,6 +74,44 @@ out = {
 					process.exit()
 					com++
 
+				if input.match(/^admin/i)
+					out.getAdminToken()
+					com++
+
+				if input.match(/^remove/i)
+					if input.match(/^remove .*$/i)
+						out.removePlayer input.match(/^remove (.*)$/i)[1]
+					else
+						out.error 'Invalid syntax!'
+					com++
+
+				if input.match(/^kick/i)
+					if input.match(/^kick .*$/i)
+						out.removePlayer input.match(/^kick (.*)$/i)[1]
+					else
+						out.error 'Invalid syntax!'
+					com++
+
+				if input.match(/^players/i)
+					players = eurecaServer.exports.getPlayers()
+					results = []
+					for _, player of players
+						results.push player.name
+					out.text (results.join '\n'), true
+					com++
+
+				if input.match(/^player /i)
+					if input.match(/^player .*$/i)
+						name = input.match(/^player (.*)$/i)[1]
+						players = eurecaServer.exports.getPlayers()
+						if players[name]
+							out.text(util.format(players[name]))
+						else
+							out.error 'Player ' + name + ' not exists!'
+					else
+						out.error 'Invalid syntax!'
+					com++
+
 				unless com
 					setImmediate ->
 						out.error 'Unknown command!'
@@ -78,7 +120,7 @@ out = {
 		f()
 
 	cliRebase: () ->
-		out.cliLine.rebase() if out.cliLine
+		setImmediate( -> out.cliLine.rebase()) if out.cliLine
 
 }
 
@@ -119,10 +161,12 @@ port = process.env.PORT || 5000
 
 server.listen port
 
+game = require('./scripts/main.js') eurecaServer, out
+
 out.promo 'SHOOTER.IO'
 out.welcome 'Welcome in SHOOTER.IO server!'
 out.message 'Listening on ' + ('http://localhost:' + port).blue + '!'
+out.getAdminToken()
 out.welcome 'Type "help" for view list of avaliable commands.'
 out.cli()
 
-game = require('./scripts/main.js') eurecaServer, out

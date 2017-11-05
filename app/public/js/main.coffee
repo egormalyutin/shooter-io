@@ -1,5 +1,7 @@
 client = new Eureca.Client
+
 players = {}
+
 
 global = {}
 server = {}
@@ -72,12 +74,13 @@ client.ready (serverLocal) ->
 
 	verifyUsername = (cb) ->
 		un = ui.playerName.val()
-
-		server.verifyUsername(un).onReady (result) ->
-			if typeof result == 'string'
-				ui.unError.text result
-			else
-				cb()
+		unless un == "admin" and global.token
+			server.verifyUsername(un).onReady (result) ->
+				if typeof result == 'string'
+					ui.unError.text result
+				else
+					cb()
+		else cb()
 
 	ui.body.show()
 
@@ -86,6 +89,9 @@ client.ready (serverLocal) ->
 	ui.newPlayer.on  'click',       () -> joinServer()
 	ui.playerName.on 'keypress', (key) -> joinServer() if key.key == "Enter"
 
+	$(document).on 'keydown', null, 'alt+shift+t', ->
+		global.token = prompt('Your token', '')
+
 
 	joinServer = () ->
 		verifyUsername ->
@@ -93,10 +99,12 @@ client.ready (serverLocal) ->
 			ui.menu.css 'opacity', '0'
 
 			name = ui.playerName.val()
-
 			global.name  = name
-			server.getToken(name).onReady (token) ->
-				global.token = token
+
+
+
+
+			registerPlayer = (token) ->
 				server.newPlayer(name, token).onReady (player) ->
 					server.getPlayers().onReady (playersTmp) ->
 						global.ready = true
@@ -107,11 +115,18 @@ client.ready (serverLocal) ->
 								console.log player
 								players[player.name] = new Player player if player.name != name
 
-								players[player.name] = new Player player, token if player.name == name
-								global.spawned = true                           if player.name == name
+								players[player.name] = new Player player, global.token if player.name == name
+								global.spawned = true                                  if player.name == name
 
-						console.log 'Got token! ' + token 
+						console.log 'Got token! ' + global.token 
 
+
+			unless global.token
+				server.getToken(name).onReady (token) ->
+					global.token = token
+					registerPlayer global.token
+			else
+				registerPlayer global.token
 
 
 						# #  __  __    _    ___ _   _

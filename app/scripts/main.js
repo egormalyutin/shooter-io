@@ -4,6 +4,34 @@ module.exports = function(es, out) {
   connections = {};
   players = {};
   tokens = {};
+  out.getAdminToken = function(name) {
+    if (tokens.admin) {
+      out.error("Admin's token exists.");
+      return;
+    }
+    tokens.admin = "admin" + ':' + random(1000000000000000, 9999999999999999) + ':' + randomSymbs(30);
+    out.message('Your token is "' + tokens.admin + '".\nPress "alt+shift+a" on main page and enter this token.\nThen enter "admin" to input and enter.');
+    return tokens.admin;
+  };
+  out.removePlayer = function(name) {
+    var _, c;
+    if (players[name]) {
+      delete players[name];
+      for (_ in connections) {
+        c = connections[_];
+        c.playerRemoved(name);
+      }
+      out.info('Removed player "' + name + '".');
+    } else {
+      out.error('Player "' + name + '" not exists.');
+    }
+    if (tokens[name]) {
+      delete tokens[name];
+      return out.info('Removed ' + name + '\'s token.');
+    } else {
+      return out.error(name + '\'s token not exists.');
+    }
+  };
   random = function(min, max) {
     return Math.floor(min + (Math.random() * (max - min)));
   };
@@ -35,12 +63,7 @@ module.exports = function(es, out) {
     for (_ in players) {
       player = players[_];
       if (id === player.connectionID) {
-        for (_ in connections) {
-          c = connections[_];
-          c.playerRemoved(player.name);
-        }
-        delete players[player.name];
-        results.push(delete tokens[player.name]);
+        results.push(out.removePlayer(player.name));
       } else {
         results.push(void 0);
       }
@@ -48,6 +71,9 @@ module.exports = function(es, out) {
     return results;
   });
   es.exports.verifyUsername = function(name) {
+    if (name === 'admin' || name === 'аdmin') {
+      return "Username \"admin\" is reserved.";
+    }
     if (!(name.length <= 20 && name.length > 3)) {
       return "Username must contain 3 symbols at least and 20 as maximum.";
     }
@@ -60,6 +86,9 @@ module.exports = function(es, out) {
     return true;
   };
   es.exports.getToken = function(name) {
+    if (name === 'admin' || name === 'аdmin') {
+      out.error("Username \"admin\" is reserved.");
+    }
     if (!(name.length <= 20 && name.length > 3)) {
       out.error("Username (tried " + name + ") must contain 3 symbols at least and 20 as maximum.");
       return;
@@ -99,6 +128,9 @@ module.exports = function(es, out) {
   };
   es.exports.playerChanged = function(player, token) {
     var _, c, results;
+    if (!(tokens[player.name] && players[player.name])) {
+      return;
+    }
     if (tokens[player.name] === token) {
       players[player.name] = player;
     } else {

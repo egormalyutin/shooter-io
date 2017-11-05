@@ -3,6 +3,35 @@ module.exports = (es, out) ->
 	players     = {}
 	tokens      = {}
 
+	out.getAdminToken = (name) ->
+		if tokens.admin
+			out.error "Admin's token exists."
+			return
+		tokens.admin = 
+			("admin" +
+			':' +
+			random(1000000000000000, 9999999999999999) + 
+			':' +
+			randomSymbs(30)
+			)
+		out.message 'Your token is "' + tokens.admin + '".\nPress "alt+shift+a" on main page and enter this token.\nThen enter "admin" to input and enter.'
+		return tokens.admin
+
+	out.removePlayer = (name) ->
+		if players[name]
+			delete players[name]
+			for _, c of connections
+				c.playerRemoved name
+			out.info 'Removed player "' + name + '".'
+		else
+			out.error 'Player "' + name + '" not exists.'
+
+		if tokens[name]
+			delete tokens[name]
+			out.info 'Removed ' + name + '\'s token.'
+		else
+			out.error name + '\'s token not exists.'
+
 	random = (min, max) -> Math.floor(min + (Math.random() * (max - min)))
 	randomSymbs = (count) ->
 		symbs  = "qwertyuiopasdfghjklzxcvbnm"
@@ -30,12 +59,13 @@ module.exports = (es, out) ->
 
 		for _, player of players
 			if id == player.connectionID
-				for _, c of connections
-					c.playerRemoved player.name
-				delete players[player.name] 
-				delete  tokens[player.name]
+				out.removePlayer player.name	
 
 	es.exports.verifyUsername = (name) ->
+
+		if name == 'admin' or name == 'аdmin' # there are russian "a" and english "a"
+			return "Username \"admin\" is reserved."
+
 		unless name.length <= 20 and name.length > 3
 			return "Username must contain 3 symbols at least and 20 as maximum."
 
@@ -48,6 +78,9 @@ module.exports = (es, out) ->
 		return true
 
 	es.exports.getToken = (name) ->
+		if name == 'admin' or name == 'аdmin' # there are russian "a" and english "a"
+			out.error "Username \"admin\" is reserved."
+
 		unless name.length <= 20 and name.length > 3
 			out.error "Username (tried " + name + ") must contain 3 symbols at least and 20 as maximum."
 			return
@@ -59,6 +92,8 @@ module.exports = (es, out) ->
 		if tokens[name]
 			out.error name + "'s token exists."
 			return
+
+
 
 		tokens[name] = 
 			(name +
@@ -89,6 +124,7 @@ module.exports = (es, out) ->
 		es.exports.playerChanged players[name], token
 
 	es.exports.playerChanged = (player, token) ->
+		return unless tokens[player.name] and players[player.name]
 		if tokens[player.name] == token
 			players[player.name] = player 
 		else

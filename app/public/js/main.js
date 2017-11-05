@@ -87,13 +87,17 @@ client.ready(function(serverLocal) {
   verifyUsername = function(cb) {
     var un;
     un = ui.playerName.val();
-    return server.verifyUsername(un).onReady(function(result) {
-      if (typeof result === 'string') {
-        return ui.unError.text(result);
-      } else {
-        return cb();
-      }
-    });
+    if (!(un === "admin" && global.token)) {
+      return server.verifyUsername(un).onReady(function(result) {
+        if (typeof result === 'string') {
+          return ui.unError.text(result);
+        } else {
+          return cb();
+        }
+      });
+    } else {
+      return cb();
+    }
   };
   ui.body.show();
   ui.newPlayer.on('click', function() {
@@ -104,17 +108,19 @@ client.ready(function(serverLocal) {
       return joinServer();
     }
   });
+  $(document).on('keydown', null, 'alt+shift+t', function() {
+    return global.token = prompt('Your token', '');
+  });
   return joinServer = function() {
     return verifyUsername(function() {
-      var name;
+      var name, registerPlayer;
       setTimeout((function() {
         return ui.menu.hide();
       }), 300);
       ui.menu.css('opacity', '0');
       name = ui.playerName.val();
       global.name = name;
-      return server.getToken(name).onReady(function(token) {
-        global.token = token;
+      registerPlayer = function(token) {
         return server.newPlayer(name, token).onReady(function(player) {
           return server.getPlayers().onReady(function(playersTmp) {
             var _;
@@ -128,17 +134,25 @@ client.ready(function(serverLocal) {
                   players[player.name] = new Player(player);
                 }
                 if (player.name === name) {
-                  players[player.name] = new Player(player, token);
+                  players[player.name] = new Player(player, global.token);
                 }
                 if (player.name === name) {
                   global.spawned = true;
                 }
               }
             }
-            return console.log('Got token! ' + token);
+            return console.log('Got token! ' + global.token);
           });
         });
-      });
+      };
+      if (!global.token) {
+        return server.getToken(name).onReady(function(token) {
+          global.token = token;
+          return registerPlayer(global.token);
+        });
+      } else {
+        return registerPlayer(global.token);
+      }
     });
   };
 });
