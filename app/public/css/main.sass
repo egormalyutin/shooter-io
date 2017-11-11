@@ -1,4 +1,9 @@
+@import 'glitch.sass'
+
 //// FONTS ////
+
+.glitch
+	font-size: 7vw
 
 @font-face
 	font-family: def
@@ -55,7 +60,7 @@ button
 	&:hover, &:active
 		background: rgba(#673AB7, 0.8)
 
-#menu
+.menu
 	display: flex
 	justify-content: center
 	align-items: center
@@ -67,6 +72,12 @@ button
 	// opacity: 0.5
 	background: white
 	z-index: 1
+	transition: opacity ease-out 0.3s
+
+#menu
+	opacity: 0
+#preloader
+	z-index: 5
 	transition: opacity ease-out 0.3s
 
 #game
@@ -89,4 +100,7 @@ button
 
 #unError
 	margin-top: 1vw
+	color: #E53935
+
+.error
 	color: #E53935

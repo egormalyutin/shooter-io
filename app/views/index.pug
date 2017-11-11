@@ -12,11 +12,20 @@ html
 		script(src = "libs/phaser.min.js")
 	body
 		//- #menu(style = "display: none")
-		#menu
+
+		#preloader.menu
+			img(src = 'images/preloader.gif')
+
+		#menu.menu
 			#joinServer
+				//- span.glitch(data-text = "LOLKEK") 
 				input#playerName(placeholder = "Your nickname", maxlength = 20)
 				button#newPlayer Join server!
 				#unError
+
+		#connection.menu.error 
+
+
 
 		#game
 
